@@ -50,7 +50,7 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
         user.getRoles().forEach(role -> {
             authorities.add(new SimpleGrantedAuthority(role.getName()));
         });
-        log.info("User authorities: {}", authorities);
+        log.info("User authorities: {}", authorities); //User authorities: [ROLE_USER, ROLE_ADMIN]
         return new User(user.getUsername(), user.getPassword(), authorities);
     }
 
