@@ -2,6 +2,7 @@ package com.buinam.userservice.filter;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.buinam.userservice.utils.JwtUtils;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
@@ -53,7 +54,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         log.info("Username is: {}", username); log.info("Password is: {}", password);
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         log.info("Authentication token: {}", authenticationToken);
-        log.info("return from attempAuthentication: {}", authenticationManager.authenticate(authenticationToken));
+        log.info("before authenticationManager.authenticate");
         //UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=drogba, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, credentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_ADMIN, ROLE_USER]], Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_ADMIN, ROLE_USER]]
         return authenticationManager.authenticate(authenticationToken);
     }
@@ -61,24 +62,29 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
         User user = (User)authentication.getPrincipal();
-        Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
-        String access_token = JWT.create()
-                .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
-                .withIssuer(request.getRequestURL().toString())
-                .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
-                .sign(algorithm);
-        String refresh_token = JWT.create()
-                .withSubject(user.getUsername())
-                .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
-                .withIssuer(request.getRequestURL().toString())
-                .sign(algorithm);
+        log.info("User: {}", user);
+        String access_token = JwtUtils.generateAccessToken(user, request);
+        String refresh_token = JwtUtils.generateRefreshToken(user, request);
         /*response.setHeader("access_token", access_token);
         response.setHeader("refresh_token", refresh_token);*/
+
+        /*
+            {
+              "sub": "drogba",
+              "roles": [
+                "ROLE_ADMIN",
+                "ROLE_USER"
+              ],
+              "iss": "http://localhost:8080/api/login",
+              "exp": 1648725050
+            }
+        */
         log.info("Access token is: {}", access_token); log.info("Refresh token is: {}", refresh_token);
         Map<String, String> tokens = new HashMap<>();
         tokens.put("access_token", access_token);
         tokens.put("refresh_token", refresh_token);
+        tokens.put("user", user.getUsername());
+        tokens.put("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()).toString());
         response.setContentType(APPLICATION_JSON_VALUE);
         new ObjectMapper().writeValue(response.getOutputStream(), tokens);
     }
@@ -86,7 +92,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
         Map<String, String> message_error = new HashMap<>();
-        message_error.put("message", failed.getMessage());
+        message_error.put("error", failed.getMessage());
         response.setContentType(APPLICATION_JSON_VALUE);
         new ObjectMapper().writeValue(response.getOutputStream(), message_error);
 //        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, failed.getMessage());

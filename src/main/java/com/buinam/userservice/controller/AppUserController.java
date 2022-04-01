@@ -8,9 +8,11 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.buinam.userservice.model.AppUser;
 import com.buinam.userservice.model.Role;
 import com.buinam.userservice.service.AppUserService;
+import com.buinam.userservice.utils.JwtUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -34,6 +36,7 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
+@Slf4j
 public class AppUserController {
     private final AppUserService appUserService;
 
@@ -77,17 +80,14 @@ public class AppUserController {
         if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             try {
                 String refresh_token = authorizationHeader.substring("Bearer ".length());
-                Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
-                JWTVerifier verifier = JWT.require(algorithm).build();
-                DecodedJWT decodedJWT = verifier.verify(refresh_token);
-                String username = decodedJWT.getSubject();
+                log.info("Before decoded JWT");
+
+                DecodedJWT decodedJWT = JwtUtils.verifyToken(refresh_token);
+                String username = JwtUtils.getUserName(decodedJWT);
                 AppUser user = appUserService.getUser(username);
-                String access_token = JWT.create()
-                        .withSubject(user.getUsername())
-                        .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
-                        .withIssuer(request.getRequestURL().toString())
-                        .withClaim("roles", user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
-                        .sign(algorithm);
+
+                String access_token = JwtUtils.generateAccessToken(user, request);
+
                 Map<String, String> tokens = new HashMap<>();
                 tokens.put("access_token", access_token);
                 tokens.put("refresh_token", refresh_token);

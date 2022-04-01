@@ -4,6 +4,7 @@ import com.buinam.userservice.model.AppUser;
 import com.buinam.userservice.model.Role;
 import com.buinam.userservice.repository.AppUserRepository;
 import com.buinam.userservice.repository.RoleRepository;
+import com.buinam.userservice.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -33,6 +34,7 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final PasswordEncoder passwordEncoder;
+
     @Override //UserDetailsService
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         AppUser user = appUserRepository.findByUsername(username);
@@ -45,11 +47,7 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
             log.info("User found: {}", user);
         }
 
-
-        Collection<SimpleGrantedAuthority> authorities = new ArrayList<>(user.getRoles().size());
-        user.getRoles().forEach(role -> {
-            authorities.add(new SimpleGrantedAuthority(role.getName()));
-        });
+        Collection<SimpleGrantedAuthority> authorities = JwtUtils.getAuthorities(user.getRoles());
         log.info("User authorities: {}", authorities); //User authorities: [ROLE_USER, ROLE_ADMIN]
         return new User(user.getUsername(), user.getPassword(), authorities);
     }
