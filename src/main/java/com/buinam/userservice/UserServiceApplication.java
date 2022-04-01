@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.ArrayList;
-//https://github.dev/getarrays/userservice
+
 @SpringBootApplication
 public class UserServiceApplication {
 
