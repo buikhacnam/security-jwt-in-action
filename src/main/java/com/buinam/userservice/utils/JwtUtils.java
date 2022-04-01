@@ -23,15 +23,17 @@ public class JwtUtils {
     private final static JWTVerifier verifier = JWT.require(algorithm).build();
 
 
+    //generate token from userDetails
     public static String generateAccessToken(User user, HttpServletRequest request) {
         return JWT.create()
                 .withSubject(user.getUsername())
                 .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
                 .withIssuer(request.getRequestURL().toString())
-                .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
+                .withClaim("roles", user.getAuthorities().stream().map((GrantedAuthority g) -> g.getAuthority()).collect(Collectors.toList()))
                 .sign(algorithm);
     }
 
+    //generate token from user model
     public static String generateAccessToken(AppUser user, HttpServletRequest request) {
         return JWT.create()
                 .withSubject(user.getUsername())
@@ -53,18 +55,21 @@ public class JwtUtils {
         return verifier.verify(token);
     }
 
+
+    //get roles from token
     public static Collection<SimpleGrantedAuthority> getAuthorities(DecodedJWT decodedJWT) {
-//        String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
-//        Collection<SimpleGrantedAuthority> authorities  = new ArrayList<>();
-//        Arrays.stream(roles).forEach(role -> {
-//            authorities.add(new SimpleGrantedAuthority(role));
-//        });
-//        return authorities;
-        return decodedJWT.getClaim("roles").asList(String.class).stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+        String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
+        Collection<SimpleGrantedAuthority> authorities  = new ArrayList<>();
+        Arrays.stream(roles).forEach(role -> {
+            authorities.add(new SimpleGrantedAuthority(role));
+        });
+        return authorities;
+//        return decodedJWT.getClaim("roles").asList(String.class).stream()
+//                .map(SimpleGrantedAuthority::new)
+//                .collect(Collectors.toList());
     }
 
+    //get roles from role model and map to SimpleGrantedAuthority
     public static Collection<SimpleGrantedAuthority> getAuthorities(Collection<Role> roles) {
         Collection<SimpleGrantedAuthority> authorities  = new ArrayList<>();
         roles.forEach(role -> {

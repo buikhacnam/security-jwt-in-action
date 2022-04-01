@@ -20,6 +20,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -55,7 +56,15 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
     @Override
     public AppUser saveUser(AppUser user) {
         log.info("Saving user: {}", user);
+
+        Optional<AppUser> optionalUser = Optional.ofNullable(appUserRepository.findByUsername(user.getUsername()));
+        if (optionalUser.isPresent()) {
+            throw new RuntimeException("User already exists");
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        Collection<Role> initialRole = new ArrayList<>();
+        Role role = roleRepository.findByName("ROLE_USER");
+        user.getRoles().add(role);
         return appUserRepository.save(user);
     }
 
