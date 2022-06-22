@@ -38,13 +38,14 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
                     String token = authorizationHeader.substring("Bearer ".length());
                     // if the token is valid, it will pass the decodeJWT verification below and return a decodedJWT object
                     DecodedJWT decodedJWT = JwtUtils.verifyToken(token);
-
+                    log.info("decodedJWT: {}", decodedJWT);
                     String username = JwtUtils.getUserName(decodedJWT);
                     log.info("username: {}", username);
                     Collection<SimpleGrantedAuthority> authorities = JwtUtils.getAuthorities(decodedJWT);
                     log.info("authorities: {}", authorities);
                     UsernamePasswordAuthenticationToken authenticationToken =
                             new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    log.info("authenticationToken: {}", authenticationToken);
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     filterChain.doFilter(request, response);
                 }catch (Exception exception) {
