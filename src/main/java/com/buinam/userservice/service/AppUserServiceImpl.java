@@ -50,7 +50,7 @@ public class AppUserServiceImpl implements AppUserService, UserDetailsService {
 
         Collection<SimpleGrantedAuthority> authorities = JwtUtils.getAuthorities(user.getRoles());
         log.info("User authorities: {}", authorities); //User authorities: [ROLE_USER, ROLE_ADMIN]
-        return new User(user.getUsername(), user.getPassword(), authorities);
+        return new User(user.getUsername(), user.getPassword(), authorities); // this is the UserDetails object that Spring Security will use to authenticate the user.
     }
 
     @Override

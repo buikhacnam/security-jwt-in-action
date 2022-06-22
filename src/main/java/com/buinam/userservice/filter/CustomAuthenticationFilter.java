@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Slf4j
@@ -44,29 +45,26 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         String password = null;
 
         try {
-            String test = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-            log.info("Request body: {}", test);
-            username = new ObjectMapper().readValue(test, MapUser.class).getUsername();
-            password = new ObjectMapper().readValue(test, MapUser.class).getPassword();
+            String userInfo = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+            log.info("Request body: {}", userInfo);
+            username = new ObjectMapper().readValue(userInfo, MapUser.class).getUsername();
+            password = new ObjectMapper().readValue(userInfo, MapUser.class).getPassword();
         } catch (IOException e) {
             e.printStackTrace();
         }
         log.info("Username is: {}", username); log.info("Password is: {}", password);
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-        log.info("Authentication token: {}", authenticationToken);
+        log.info("Authentication token: {}", authenticationToken); // UsernamePasswordAuthenticationToken [Principal=drogba, Credentials=[PROTECTED], Authenticated=false, Details=null, Granted Authorities=[]]
         log.info("before authenticationManager.authenticate");
-        //UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=drogba, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, credentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_ADMIN, ROLE_USER]], Credentials=[PROTECTED], Authenticated=true, Details=null, Granted Authorities=[ROLE_ADMIN, ROLE_USER]]
-        return authenticationManager.authenticate(authenticationToken);
+        return authenticationManager.authenticate(authenticationToken); // this will call UserDetailServiceImpl.loadUserByUsername()
     }
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
         User user = (User)authentication.getPrincipal();
-        log.info("User: {}", user);
+        log.info("User: {}", user); //  [Username=buinam, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, credentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[ROLE_ADMIN, ROLE_USER]]
         String access_token = JwtUtils.generateAccessToken(user, request);
         String refresh_token = JwtUtils.generateRefreshToken(user, request);
-        /*response.setHeader("access_token", access_token);
-        response.setHeader("refresh_token", refresh_token);*/
 
         /*
             {

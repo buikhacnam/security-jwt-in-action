@@ -18,10 +18,13 @@ import java.util.Date;
 import java.util.stream.Collectors;
 
 public class JwtUtils {
+
+    // this should be hidden in a config file in real life
     private final static String SECRET = "secret";
+
+    // algorithm used to sign the token
     private final static Algorithm algorithm = Algorithm.HMAC256(SECRET.getBytes());
     private final static JWTVerifier verifier = JWT.require(algorithm).build();
-
 
     //generate token from userDetails
     public static String generateAccessToken(User user, HttpServletRequest request) {
@@ -56,7 +59,7 @@ public class JwtUtils {
     }
 
 
-    //get roles from token
+    //get roles from token and map to SimpleGrantedAuthority
     public static Collection<SimpleGrantedAuthority> getAuthorities(DecodedJWT decodedJWT) {
         String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
         Collection<SimpleGrantedAuthority> authorities  = new ArrayList<>();
