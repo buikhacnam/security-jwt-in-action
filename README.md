@@ -2,6 +2,9 @@
 
 🖥️ Live app for demo: [https://i-calender.vercel.app/](https://i-calender.vercel.app/) 
 
+# If you're looking for Spring-Security-LDAP, please visit this repository:
+https://github.com/buikhacnam/Spring-Security-LDAP
+
 # What is JWT?
 JSON Web Token (JWT) is a standard for representing claims in JSON. It is a compact, self-contained, signed JSON object. It is used to represent claims in the form of a string of characters. 
 Basically, it is a JSON object that is signed with a secret key. The secret key is used to verify the authenticity of the JWT.
